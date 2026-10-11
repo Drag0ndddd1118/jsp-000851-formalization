@@ -121,7 +121,10 @@ noncomputable def commonDegree (G : SimpleGraph V) [DecidableRel G.Adj] (u v : V
 lemma commonDegree_comm (G : SimpleGraph V) [DecidableRel G.Adj] (u v : V) :
     commonDegree G u v = commonDegree G v u := by
   unfold commonDegree
-  exact Fintype.card_congr (Equiv.setCongr (G.commonNeighbors_symm u v))
+  apply Fintype.card_congr
+  apply Equiv.subtypeEquivRight
+  intro x
+  rw [G.commonNeighbors_symm u v]
 
 /-- The graph whose edges are the pairs having at least `q` common neighbors. -/
 def richGraph (G : SimpleGraph V) [DecidableRel G.Adj] (q : ℕ) : SimpleGraph V where
@@ -368,15 +371,13 @@ lemma turan_bound_richAt (hk : 2 ≤ k) (hfree : (Hk k).Free G) (x : V) :
   have hcf : R.CliqueFree ((k - 1) + 1) := by
     simpa [R, Nat.sub_add_cancel (by omega : 1 ≤ k)] using richAt_cliqueFree hfree x
   have hT := hcf.card_edgeFinset_le
-  dsimp only at hT
-  rw [← SimpleGraph.card_edgeFinset_turanGraph] at hT
-  have hT' := SimpleGraph.mul_card_edgeFinset_turanGraph_le
+  have hT' := SimpleGraph.mul_turanNumber_le
     (n := Fintype.card (G.neighborSet x)) (r := k - 1)
   calc
     2 * (k - 1) * #R.edgeFinset ≤
         2 * (k - 1) *
-          #(SimpleGraph.turanGraph
-            (Fintype.card (G.neighborSet x)) (k - 1)).edgeFinset :=
+          SimpleGraph.turanNumber
+            (Fintype.card (G.neighborSet x)) (k - 1) :=
       Nat.mul_le_mul_left _ hT
     _ ≤ ((k - 1) - 1) * Fintype.card (G.neighborSet x) ^ 2 := hT'
     _ = (k - 2) * G.degree x ^ 2 := by
